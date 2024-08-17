@@ -11,7 +11,7 @@ import {
   Button,
 } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import {
   colors,
   fonts,
@@ -64,7 +64,7 @@ const Home = () => {
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
       <CartCircle />
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, marginBottom: 60 }}>
         <View
           style={{
             height: 100,
@@ -110,7 +110,8 @@ const Home = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <View
+        <TouchableOpacity
+          onPress={() => navigation.navigate("CategoryOrSearchProducts")}
           style={{
             alignSelf: "center",
             flexDirection: "row",
@@ -129,11 +130,13 @@ const Home = () => {
           }}
         >
           <Ionicons name="search" size={24} color={colors.secondary} />
-          <TextInput
+          <Text
             placeholder="Search 'pizza' 'burger' 'desert' ..."
             style={{ flex: 1 }}
-          ></TextInput>
-        </View>
+          >
+            Search 'pizza' 'burger' 'desert' ...
+          </Text>
+        </TouchableOpacity>
         <SwiperSlider />
         <Text
           style={{
@@ -597,20 +600,115 @@ export default BottomTab = () => {
   );
 
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
-      <Tab.Screen name="Home" component={Home} />
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          position: "absolute",
+          width: "94%",
+          marginLeft: "3%",
+          marginBottom: 10,
+          height: 60,
+          borderRadius: 10,
+          elevation: 5,
+          backgroundColor: "white",
+        },
+      }}
+    >
+      <Tab.Screen
+        options={{
+          tabBarShowLabel: false,
+          tabBarIcon: ({ focused }) => (
+            <Ionicons
+              name="home"
+              size={focused ? 34 : 28}
+              color={focused ? colors.secondary : "black"}
+            />
+          ),
+        }}
+        name="Home"
+        component={Home}
+      />
       {isAuthenticated && !user?.isdeliverypartner && !user?.isseller && (
-        <Tab.Screen name="OrderPage" component={OrderPage} />
+        <Tab.Screen
+          options={{
+            tabBarShowLabel: false,
+            tabBarIcon: ({ focused }) => (
+              <Ionicons
+                name="fast-food"
+                size={focused ? 34 : 28}
+                color={focused ? colors.secondary : "black"}
+              />
+            ),
+          }}
+          name="OrderPage"
+          component={OrderPage}
+        />
       )}
       {user?.isseller && (
-        <Tab.Screen name="sellerorders" component={SellerAllOrders} />
+        <Tab.Screen
+          options={{
+            tabBarShowLabel: false,
+            tabBarIcon: ({ focused }) => (
+              <FontAwesome5
+                name="boxes"
+                size={focused ? 34 : 28}
+                color={focused ? colors.secondary : "black"}
+              />
+            ),
+          }}
+          name="sellerorders"
+          component={SellerAllOrders}
+        />
       )}
-      {isSeller && <Tab.Screen name="dashboard" component={Dashboard_Index} />}
-      {user?.isdeliverypartner && (
-        <Tab.Screen name="PartnerTab" component={PartnerTab} />
+      {isSeller && (
+        <Tab.Screen
+          options={{
+            tabBarShowLabel: false,
+            tabBarIcon: ({ focused }) => (
+              <MaterialIcons
+                name="dashboard-customize"
+                size={focused ? 34 : 28}
+                color={focused ? colors.secondary : "black"}
+              />
+            ),
+          }}
+          name="dashboard"
+          component={Dashboard_Index}
+        />
       )}
 
-      <Tab.Screen name="Profile" component={Profile} />
+      {user?.isdeliverypartner && (
+        <Tab.Screen
+          name="PartnerTab"
+          options={{
+            tabBarShowLabel: false,
+            tabBarIcon: ({ focused }) => (
+              <MaterialIcons
+                name="delivery-dining"
+                size={focused ? 40 : 34}
+                color={focused ? colors.secondary : "black"}
+              />
+            ),
+          }}
+          component={PartnerTab}
+        />
+      )}
+
+      <Tab.Screen
+        options={{
+          tabBarShowLabel: false,
+          tabBarIcon: ({ focused }) => (
+            <FontAwesome
+              name="user"
+              size={focused ? 34 : 28}
+              color={focused ? colors.secondary : "black"}
+            />
+          ),
+        }}
+        name="Profile"
+        component={Profile}
+      />
     </Tab.Navigator>
   );
 };
@@ -663,7 +761,7 @@ const ShopNav = ({ shop }) => {
         ]}
       >
         <TouchableOpacity
-          onPress={() => navigation.navigate("shop", { c: shop })}
+          onPress={() => navigation.navigate("shop", { shopdetail: shop })}
           style={[
             {
               elevation: 5,

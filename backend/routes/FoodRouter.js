@@ -106,4 +106,41 @@ router.get("/get-all-foods", async (req, res) => {
   }
 });
 
+router.post("/search-items", async (req, res) => {
+  let totalItems = 6;
+
+  try {
+    let searchValue = req.body?.searchValue?.trim(); // Space remove krne ke liye trim use karte hain
+
+    if (searchValue) {
+      let page = req.body?.page || 0; // Default page 0 agar page specified nahi hai
+      let skipItems = page * totalItems; // Page ke hisaab se skip karna
+      const items = await Foods.find({
+        $or: [
+          { name: { $regex: searchValue, $options: "i" } },
+          { description: { $regex: searchValue, $options: "i" } },
+          { category: { $regex: searchValue, $options: "i" } },
+        ],
+      })
+        .limit(totalItems)
+        .skip(skipItems);
+
+      if (items.length == 0) {
+        const items = await Foods.find().limit(totalItems).skip(skipItems);
+        return res.send({ success: true, items, isFoundFoodBySearch: false });
+      }
+
+      return res.send({ success: true, items });
+    } else {
+      let page = req.body?.page || 0; // Default page 0 agar page specified nahi hai
+      let skipItems = page * totalItems;
+      const items = await Foods.find().limit(totalItems).skip(skipItems);
+      return res.send({ success: true, items });
+    }
+  } catch (error) {
+    console.log(error.message);
+    return res.send({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

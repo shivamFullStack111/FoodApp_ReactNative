@@ -41,7 +41,7 @@ const CartCircle = () => {
           width: 70,
           height: 70,
           position: "absolute",
-          bottom: 0,
+          bottom: 60,
           right: 30,
           justifyContent: "center",
           alignItems: "center",

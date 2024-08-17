@@ -26,9 +26,9 @@ const SellerShop = () => {
 
   const { shopdetail } = useRoute().params;
 
-  // useEffect(() => {
-  //   console.log(shopdetail);
-  // }, [shopdetail]);
+  useEffect(() => {
+    console.log(shopdetail);
+  }, [shopdetail]);
 
   useEffect(() => {
     const getAllFood = async () => {

@@ -19,6 +19,7 @@ import PaymentPage from "./screens/PaymentPage";
 import OrderTrackingPage from "./screens/OrderTrackingPage";
 import BecomeDeliveryPartner from "./screens/BecomeDeliveryPartner";
 import PartnerTab from "./screens/PartnerTab";
+import CategoryOrSearchProducts from "./screens/CategoryOrSearchProducts";
 
 const Stack = createStackNavigator();
 
@@ -56,6 +57,10 @@ const IfLogin = () => {
     >
       <Stack.Screen name="home" component={Home} />
       <Stack.Screen
+        name="CategoryOrSearchProducts"
+        component={CategoryOrSearchProducts}
+      />
+      <Stack.Screen
         name="becomeDeliveryPartner"
         component={BecomeDeliveryPartner}
       />
@@ -91,6 +96,10 @@ const IfLogOut = () => {
       }}
       initialRouteName="login"
     >
+      <Stack.Screen
+        name="CategoryOrSearchProducts"
+        component={CategoryOrSearchProducts}
+      />
       <Stack.Screen name="foodDetailPage" component={FoodDetailPage} />
       <Stack.Screen name="register" component={Register} />
       <Stack.Screen name="login" component={Login} />
