@@ -10,42 +10,28 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { AntDesign } from "@expo/vector-icons";
 import { backendUrl, colors, fonts } from "../utils";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useIsFocused, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { useSelector } from "react-redux";
+import { setSellerAllOrders } from "../shop/slices/userSlice";
 
 const SellerAllOrders = () => {
   const navigation = useNavigation();
   const [isfetched, setisfetched] = useState(false);
-  const [orders, setorders] = useState([]);
+  const { sellerAllOrders } = useSelector((state) => state.user);
+  const isfocus = useIsFocused();
 
   useEffect(() => {
-    const getAllOrderOfUser = async () => {
-      try {
-        const tkn = await AsyncStorage.getItem("token");
-        // const token = JSON.parse(tkn);
-        const res = await axios.get(`${backendUrl}get-seller-orders`, {
-          headers: { Authorization: tkn },
-        });
-        if (res.data.success) {
-          setisfetched(true);
-          setorders(res.data?.orders);
-        }
-      } catch (error) {
-        console.log(error.message);
-      }
-    };
-
-    if (!isfetched) {
-      getAllOrderOfUser();
-    }
-  }, []);
+    console.log(sellerAllOrders, "hhhhhhhhhhhhhhhh");
+  }, [isfocus]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <ScrollView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }}>
           <View style={{ flex: 1, width: "95%", alignSelf: "center" }}>
+            <Text style={{ fontSize: 90 }}>{sellerAllOrders?.length}</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -64,13 +50,13 @@ const SellerAllOrders = () => {
               <Text
                 style={{ fontFamily: fonts.Roboto_500Medium, fontSize: 19 }}
               >
-                All orders
+                All Orders
               </Text>
             </View>
 
             {/* card */}
             <View style={{ marginTop: 30, gap: 20, paddingBottom: 20 }}>
-              {orders?.map((order, i) => {
+              {sellerAllOrders?.map((order, i) => {
                 return <OrderCard key={i} order={order} />;
               })}
             </View>

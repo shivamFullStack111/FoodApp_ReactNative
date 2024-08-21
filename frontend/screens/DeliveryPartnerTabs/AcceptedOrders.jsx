@@ -134,7 +134,7 @@ const AcceptedOrders = () => {
   return (
     <ScrollView style={{ flex: 1, position: "relative" }}>
       {partnerLiveOrder && (
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, paddingBottom: 69 }}>
           <View
             style={{
               flex: 1,

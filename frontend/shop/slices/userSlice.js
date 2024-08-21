@@ -11,6 +11,7 @@ const userSlice = createSlice({
     allShops: [],
     allFoods: [],
     toggleForUserAllOrder: 0,
+    sellerAllOrders: [],
   },
   reducers: {
     setUser: (state, action) => {
@@ -37,12 +38,21 @@ const userSlice = createSlice({
     setToggleForUserAllOrder: (state, action) => {
       state.toggleForUserAllOrder = state.toggleForUserAllOrder + 1;
     },
+    setSellerAllOrders: (state, action) => {
+      state.sellerAllOrders = action.payload;
+    },
+    addOneItemToSellerAllOrder: (state, action) => {
+      console.log(action.payload, "reduxxxxxxxxxxxxxxxxxxxxx");
+      state.sellerAllOrders = [...state.sellerAllOrders, action.payload];
+    },
   },
 });
 
 export default userSlice.reducer;
 export const {
   setUser,
+  setSellerAllOrders,
+  addOneItemToSellerAllOrder,
   setIsLoading,
   setIsAuthenticated,
   setIsSeller,

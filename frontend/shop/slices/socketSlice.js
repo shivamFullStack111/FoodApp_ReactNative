@@ -6,6 +6,7 @@ const socketSlice = createSlice({
     activeUsers: [],
     liveLocation: null,
     nearOrdersForSeller: [],
+    toggleForSellerNewOrder: 0,
   },
   reducers: {
     setActiveUsers: (state, action) => {

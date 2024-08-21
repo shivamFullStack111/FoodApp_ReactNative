@@ -11,13 +11,47 @@ import { TextInput } from "react-native-gesture-handler";
 import { Ionicons } from "@expo/vector-icons";
 import { backendUrl, colors } from "../utils";
 import axios from "axios";
-import { useIsFocused } from "@react-navigation/native";
+import {
+  useIsFocused,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import { useDispatch, useSelector } from "react-redux";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { setCart } from "../shop/slices/cartSlice";
 
 const CategoryOrSearchProducts = () => {
   const [searchValue, setSearchValue] = useState("");
   const [page, setPage] = useState(0);
   const [products, setProducts] = useState([]);
   const focused = useIsFocused();
+  const { cart } = useSelector((state) => state.cart);
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
+
+  const { search } = useRoute().params;
+
+  const handleAddToCart = async (food) => {
+    const isSameSeller = cart[0]?.seller == food?.seller;
+    if (!isSameSeller) {
+      dispatch(setCart([{ ...food, qty: 1 }]));
+    } else {
+      let cartt = [...cart];
+      const isAleadyHave = cart?.find((f) => f._id == food._id);
+      if (isAleadyHave) return alert("item already in cart");
+
+      cartt = [...cart, { ...food, qty: 1 }];
+      dispatch(setCart(cartt));
+      await AsyncStorage.setItem("cart", JSON.stringify(cart));
+    }
+  };
+
+  useEffect(() => {
+    if (search) {
+      console.log(search);
+      setSearchValue(search);
+    }
+  }, [search]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -51,6 +85,7 @@ const CategoryOrSearchProducts = () => {
         <Ionicons name="search" size={24} color={colors.secondary} />
         <TextInput
           onChangeText={(t) => setSearchValue(t)}
+          value={searchValue}
           placeholder="Search 'pizza' 'burger' 'desert' ..."
           style={styles.searchInput}
         />
@@ -61,7 +96,12 @@ const CategoryOrSearchProducts = () => {
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate("shop", { shopdetail: item?.seller })
+            }
+            style={styles.card}
+          >
             <Image source={{ uri: item.images[0] }} style={styles.image} />
             <View style={styles.textContainer}>
               <Text style={styles.name}>{item.name}</Text>
@@ -78,12 +118,12 @@ const CategoryOrSearchProducts = () => {
               </View>
             </View>
             <TouchableOpacity
-              onPress={() => addToCart(item)}
+              onPress={() => handleAddToCart(item)}
               style={styles.button}
             >
               <Text style={styles.buttonText}>Add to Cart</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>

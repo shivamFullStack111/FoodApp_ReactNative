@@ -75,7 +75,14 @@ const OrdersNearByDeliveryPartner = () => {
 
   return (
     <ScrollView style={{ flex: 1 }}>
-      <View style={{ width: "95%", alignSelf: "center", height: "100%" }}>
+      <View
+        style={{
+          width: "95%",
+          alignSelf: "center",
+          height: "100%",
+          paddingBottom: 69,
+        }}
+      >
         <Text
           style={{
             fontFamily: fonts.Roboto_700Bold,

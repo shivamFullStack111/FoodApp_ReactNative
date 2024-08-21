@@ -3,7 +3,11 @@ import React from "react";
 
 const History = () => {
   return (
-    <View>
+    <View
+      style={{
+        paddingBottom: 69,
+      }}
+    >
       <Text>History</Text>
     </View>
   );

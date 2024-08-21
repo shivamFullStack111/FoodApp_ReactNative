@@ -22,11 +22,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import store from "./shop/shop";
 import {
+  addOneItemToSellerAllOrder,
   setAllFoods,
   setAllFoodsOfSeller,
   setAllShops,
   setIsAuthenticated,
   setIsSeller,
+  setSellerAllOrders,
   setUser,
 } from "./shop/slices/userSlice";
 import { setCart } from "./shop/slices/cartSlice";
@@ -41,6 +43,7 @@ import haversine from "haversine";
 import Toaster from "./Toaster";
 
 import * as Location from "expo-location";
+import { useIsFocused } from "@react-navigation/native";
 
 const App = () => {
   const { liveLocation } = useSelector((state) => state.socket);
@@ -64,6 +67,29 @@ const App = () => {
     Roboto_900Black,
     Roboto_900Black_Italic,
   });
+
+  // get seller all orders
+  useEffect(() => {
+    const getAllOrderOfUser = async () => {
+      try {
+        const tkn = await AsyncStorage.getItem("token");
+        // const token = JSON.parse(tkn);
+        const res = await axios.get(`${backendUrl}get-seller-orders`, {
+          headers: { Authorization: tkn },
+        });
+        if (res.data.success) {
+          // setorders(res.data?.orders);
+          dispatch(setSellerAllOrders(res.data.orders));
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
+
+    if (user && user?.isseller) {
+      getAllOrderOfUser();
+    }
+  }, [user]);
 
   const getParnerLiveOrder = async () => {
     try {
@@ -163,12 +189,14 @@ const App = () => {
 
             let location = await Location.getCurrentPositionAsync({});
 
-            if (socket) {
+            if ((socket, partnerLiveOrder?.status == "on the way")) {
               socket.emit("newLocation", {
                 latitude: location?.coords?.latitude,
                 longitude: location?.coords?.longitude,
                 order: partnerLiveOrder,
               });
+            } else {
+              alert("not currently in the hand on you (dilevery)");
             }
 
             dispatch(
@@ -190,6 +218,7 @@ const App = () => {
     if (socket) {
       socket.on("notificationOfNewOrder", (data) => {
         settoast(true);
+        dispatch(addOneItemToSellerAllOrder(data?.order));
       });
     }
   }, [socket]);

@@ -111,7 +111,9 @@ const Home = () => {
           </View>
         </View>
         <TouchableOpacity
-          onPress={() => navigation.navigate("CategoryOrSearchProducts")}
+          onPress={() =>
+            navigation.navigate("CategoryOrSearchProducts", { search: "" })
+          }
           style={{
             alignSelf: "center",
             flexDirection: "row",
@@ -162,7 +164,11 @@ const Home = () => {
             {categories.map((cat, i) => (
               <TouchableOpacity
                 key={i}
-                onPress={() => navigation.navigate("cart")}
+                onPress={() =>
+                  navigation.navigate("CategoryOrSearchProducts", {
+                    search: cat?.name,
+                  })
+                }
               >
                 <View
                   style={{

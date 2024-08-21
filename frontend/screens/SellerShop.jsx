@@ -27,10 +27,6 @@ const SellerShop = () => {
   const { shopdetail } = useRoute().params;
 
   useEffect(() => {
-    console.log(shopdetail);
-  }, [shopdetail]);
-
-  useEffect(() => {
     const getAllFood = async () => {
       try {
         const res = await axios.post(`${backendUrl}get-all-food-seller`, {
