@@ -189,14 +189,12 @@ const App = () => {
 
             let location = await Location.getCurrentPositionAsync({});
 
-            if ((socket, partnerLiveOrder?.status == "on the way")) {
+            if (socket) {
               socket.emit("newLocation", {
                 latitude: location?.coords?.latitude,
                 longitude: location?.coords?.longitude,
                 order: partnerLiveOrder,
               });
-            } else {
-              alert("not currently in the hand on you (dilevery)");
             }
 
             dispatch(

@@ -1,4 +1,11 @@
-import { View, Text, Dimensions, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Dimensions,
+  Image,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { ScrollView } from "react-native-gesture-handler";
@@ -33,6 +40,7 @@ const AcceptedOrders = () => {
   const isfocused = useIsFocused();
   const dispatch = useDispatch();
   const [status, setstatus] = useState();
+  const [otp, setotp] = useState();
 
   useEffect(() => {
     if (partnerLiveOrder) setstatus(partnerLiveOrder?.status);
@@ -50,6 +58,35 @@ const AcceptedOrders = () => {
         // setactiveOrder(res?.data?.order);
         dispatch(setPartnerLiveOrder(res?.data?.order));
       }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
+
+  const handleOrderDeliveredWithOtp = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return alert("token not found to get live order");
+      const res = await axios.post(
+        `${backendUrl}update-status-of-order`,
+        {
+          otp,
+          orderid: partnerLiveOrder?._id,
+        },
+        { headers: { Authorization: token } }
+      );
+      if (res.data.success) {
+        alert("Order delivered successfully");
+        if (socket) {
+          socket.emit("updateStatus", {
+            status: "delivered",
+            order: partnerLiveOrder,
+          });
+          setPartnerLiveOrder(null);
+        }
+        setstatus("delivered");
+        getParnerLiveOrder();
+      } else alert(res?.data?.message);
     } catch (error) {
       console.log(error.message);
     }
@@ -195,6 +232,65 @@ const AcceptedOrders = () => {
               </MapView>
             )}
           </View>
+          {status == "on the way" && (
+            <View
+              style={{
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  paddingVertical: 5,
+                  fontSize: 19,
+                  width: "50%",
+                  // marginRight: 10,
+                  // paddingHorizontal: 10,
+                  // paddingLeft: 20,
+
+                  borderRadius: 5,
+                  fontWeight: "500",
+                  textAlign: "center",
+                  letterSpacing: 20,
+                  marginTop: 20,
+                }}
+                keyboardType="numeric"
+                maxLength={4}
+                cursorColor={colors.secondary}
+                clearButtonMode="while-editing"
+                placeholder="O T P"
+                placeholderTextColor={"gray"}
+                onChangeText={(t) => setotp(t)}
+              ></TextInput>
+              {otp?.length == 4 && (
+                <TouchableOpacity
+                  onPress={handleOrderDeliveredWithOtp}
+                  style={{
+                    width: "80%",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 10,
+                    marginTop: 10,
+                    borderColor: colors.secondary,
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingVertical: 10,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: fonts.Roboto_700Bold,
+                      fontSize: 17,
+                      color: colors.secondary,
+                    }}
+                  >
+                    Confirm Order Delivered
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           {status == "preparing..." && (
             <View
               style={{
@@ -238,6 +334,7 @@ const AcceptedOrders = () => {
               </TouchableOpacity>
             </View>
           )}
+
           <View
             style={{
               width: "95%",

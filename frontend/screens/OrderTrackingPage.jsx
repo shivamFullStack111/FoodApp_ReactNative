@@ -34,8 +34,10 @@ import { setDestination } from "../shop/slices/liveOrderSlice";
 import polyline from "@mapbox/polyline";
 import { useSocket } from "../SocketContext";
 
-const OrderTrackingPage = () => {
-  const { order, sellerEmail } = useRoute().params;
+const OrderTrackingPage = ({ route }) => {
+  // const { order, sellerEmail } = useRoute().params;
+  const [sellerEmail, setsellerEmail] = useState(route?.params?.sellerEmail);
+  const [order, setorder] = useState(route?.params?.order);
   const isFocused = useIsFocused();
   const navigation = useNavigation();
   const { origin, destination } = useSelector((state) => state.liveOrder);
@@ -59,6 +61,16 @@ const OrderTrackingPage = () => {
       if (order?.israted) setisrated(true);
     }
   }, [order]);
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("updatedStatusToBuyer", ({ status, order }, data) => {
+        if (data?.order?._id == order?._id) {
+          setorder({ ...order, status });
+        }
+      });
+    }
+  }, [socket]);
 
   useEffect(() => {
     const getDirectionss = async () => {
@@ -85,7 +97,7 @@ const OrderTrackingPage = () => {
           latitude: point[0],
           longitude: point[1],
         }));
-        setCoordinates(coords);
+        setCoordinates(coords || undefined);
       } catch (error) {
         alert(error.message);
       }
@@ -217,123 +229,118 @@ const OrderTrackingPage = () => {
   }, [sellerEmail]);
 
   return (
-    <View style={{ flex: 1 }}>
-      {pageLoading || !coordinates ? (
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            width: width,
-            height: height,
-          }}
-        >
-          <ActivityIndicator color={colors.secondary} size={38} />
-        </View>
-      ) : (
-        <SafeAreaView style={{ flex: 1 }}>
-          <KeyboardAvoidingView style={{ flex: 1 }}>
-            <View style={{ flex: 1 }}>
-              <AntDesign
-                onPress={() => navigation.navigate("home")}
-                style={{
-                  position: "absolute",
-                  zIndex: 40,
-                  top: 10,
-                  left: 10,
-                  borderRadius: 100,
-                  backgroundColor: "white",
-                }}
-                name="leftcircle"
-                size={30}
-                color="black"
-              />
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        {pageLoading || !coordinates ? (
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              width: width,
+              height: height,
+            }}
+          >
+            <ActivityIndicator color={colors.secondary} size={38} />
+          </View>
+        ) : (
+          <SafeAreaView style={{ flex: 1 }}>
+            <KeyboardAvoidingView style={{ flex: 1 }}>
+              <View style={{ flex: 1 }}>
+                <AntDesign
+                  onPress={() => navigation.navigate("home")}
+                  style={{
+                    position: "absolute",
+                    zIndex: 40,
+                    top: 10,
+                    left: 10,
+                    borderRadius: 100,
+                    backgroundColor: "white",
+                  }}
+                  name="leftcircle"
+                  size={30}
+                  color="black"
+                />
 
-              {order?.status !== "delivered" && (
+                {order?.status !== "delivered" && (
+                  <View
+                    style={{
+                      width: "100%",
+                      height: "60%",
+                    }}
+                  >
+                    <MapView
+                      initialRegion={{
+                        latitude: destination?.latitude,
+                        longitude: destination?.longitude,
+                        latitudeDelta: LATITUDE_DELTA,
+                        longitudeDelta: LONGITUDE_DELTA,
+                      }}
+                      style={{ flex: 1 }}
+                    >
+                      {origin && (
+                        <Marker
+                          coordinate={{
+                            // latitude: deliveryLocation?.latitude
+                            //   ? deliveryLocation?.latitude
+                            //   : origin?.latitude,
+                            // longitude: deliveryLocation?.longitude
+                            //   ? deliveryLocation?.longitude
+                            //   : origin?.longitude,
+                            latitude: deliveryLocation?.latitude
+                              ? deliveryLocation?.latitude
+                              : order?.foods[0]?.sellerDetails?.shopaddress
+                                  ?.latitude,
+                            longitude: deliveryLocation?.longitude
+                              ? deliveryLocation?.longitude
+                              : order?.foods[0]?.sellerDetails?.shopaddress
+                                  .longitude,
+                          }}
+                          title="Origin"
+                        >
+                          <Image
+                            source={{
+                              uri: "data:image/jpeg;base64,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",
+                            }}
+                            style={{ width: 40, height: 40, borderRadius: 100 }}
+                          />
+                        </Marker>
+                      )}
+                      {destination?.latitude && destination?.longitude && (
+                        <Marker
+                          coordinate={{
+                            latitude: order?.user?.address?.latitude,
+                            longitude: order?.user?.address?.longitude,
+                          }}
+                          title="Destination"
+                        >
+                          <Image
+                            style={{ width: 40, height: 40, borderRadius: 100 }}
+                            source={{
+                              uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6epuyk4JDdG6RPW7c_5CrHuPe1TzQW77sOA&s",
+                            }}
+                          ></Image>
+                        </Marker>
+                      )}
+                      {coordinates && coordinates?.length > 0 && (
+                        <Polyline
+                          coordinates={coordinates}
+                          strokeWidth={3}
+                          strokeColor="#4665F5"
+                        />
+                      )}
+                    </MapView>
+                  </View>
+                )}
+
                 <View
                   style={{
-                    width: "100%",
-                    height: "60%",
+                    width: "95%",
+                    height: "100%",
+                    alignSelf: "center",
                   }}
                 >
-                  <MapView
-                    // region={{
-                    //   latitude: 31.1471,
-                    //   longitude: 75.3412,
-                    //   latitudeDelta: 0,
-                    //   longitudeDelta: 1,
-                    // }}
-                    initialRegion={{
-                      latitude: destination?.latitude,
-                      longitude: destination?.longitude,
-                      latitudeDelta: LATITUDE_DELTA,
-                      longitudeDelta: LONGITUDE_DELTA,
-                    }}
-                    style={{ flex: 1 }}
-                  >
-                    {origin && (
-                      <Marker
-                        coordinate={{
-                          // latitude: deliveryLocation?.latitude
-                          //   ? deliveryLocation?.latitude
-                          //   : origin?.latitude,
-                          // longitude: deliveryLocation?.longitude
-                          //   ? deliveryLocation?.longitude
-                          //   : origin?.longitude,
-                          latitude: deliveryLocation?.latitude
-                            ? deliveryLocation?.latitude
-                            : order?.foods[0]?.sellerDetails?.shopaddress
-                                ?.latitude,
-                          longitude: deliveryLocation?.longitude
-                            ? deliveryLocation?.longitude
-                            : order?.foods[0]?.sellerDetails?.shopaddress
-                                .longitude,
-                        }}
-                        title="Origin"
-                      >
-                        <Image
-                          source={{
-                            uri: "data:image/jpeg;base64,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",
-                          }}
-                          style={{ width: 40, height: 40, borderRadius: 100 }}
-                        />
-                      </Marker>
-                    )}
-                    {destination?.latitude && destination?.longitude && (
-                      <Marker
-                        coordinate={{
-                          latitude: order?.user?.address?.latitude,
-                          longitude: order?.user?.address?.longitude,
-                        }}
-                        title="Destination"
-                      >
-                        <Image
-                          style={{ width: 40, height: 40, borderRadius: 100 }}
-                          source={{
-                            uri: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6epuyk4JDdG6RPW7c_5CrHuPe1TzQW77sOA&s",
-                          }}
-                        ></Image>
-                      </Marker>
-                    )}
-                    {coordinates && coordinates?.length > 0 && (
-                      <Polyline
-                        coordinates={coordinates}
-                        strokeWidth={3}
-                        strokeColor="#4665F5"
-                      />
-                    )}
-                  </MapView>
-                </View>
-              )}
-
-              <View
-                style={{
-                  width: "95%",
-                  height: "100%",
-                  alignSelf: "center",
-                }}
-              >
-                {/*
+                  {/*
                  <View
                   style={{
                     alignItems: "center",
@@ -378,249 +385,311 @@ const OrderTrackingPage = () => {
                   ></Image>
                 </View>
                  */}
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  style={{
-                    flex: 1,
-                    backgroundColor: "white",
-                    marginTop: 10,
-                    borderRadius: 15,
-                    paddingVertical: 10,
-                    paddingHorizontal: 10,
-                  }}
-                >
-                  <View
+                  <ScrollView
+                    // showsVerticalScrollIndicator={false}
                     style={{
-                      flexDirection: "row",
-                      gap: 20,
-                      alignItems: "center",
-                      shadowColor: "blue",
-                      marginTop: order?.status == "delivered" ? 25 : 0,
+                      flex: 1,
+                      backgroundColor: "white",
+                      marginTop: 10,
+                      borderRadius: 15,
+                      paddingVertical: 10,
+                      paddingHorizontal: 10,
                     }}
                   >
-                    <Text
-                      style={{ fontFamily: fonts.Roboto_700Bold, fontSize: 17 }}
-                    >
-                      Total items :-
-                    </Text>
-                    <Text
+                    <View
                       style={{
-                        fontFamily: fonts.Roboto_500Medium,
-                        fontSize: 15,
-                        color: "gray",
-                      }}
-                    >
-                      {order?.foods?.length}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 20,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text
-                      style={{ fontFamily: fonts.Roboto_700Bold, fontSize: 17 }}
-                    >
-                      Total price :-
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: fonts.Roboto_500Medium,
-                        fontSize: 15,
-                        color: "gray",
-                      }}
-                    >
-                      ${order?.amount}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 2,
-                      alignItems: "center",
-                      marginTop: 3,
-                    }}
-                  >
-                    <Text
-                      style={{ fontFamily: fonts.Roboto_700Bold, fontSize: 17 }}
-                    >
-                      Order Status :-{" "}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: fonts.Roboto_700Bold,
-                        fontSize: 15,
-                        textDecorationLine: "underline",
-                      }}
-                    >
-                      {order?.status}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      gap: 2,
-                      alignItems: "center",
-                      marginTop: 3,
-                    }}
-                  >
-                    <Text
-                      style={{ fontFamily: fonts.Roboto_700Bold, fontSize: 17 }}
-                    >
-                      seller :-{" "}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: fonts.Roboto_700Bold,
-                        fontSize: 15,
-                        textDecorationLine: "underline",
-                      }}
-                    >
-                      {order?.seller}
-                    </Text>
-                  </View>
-
-                  <View>
-                    <Text
-                      style={{
-                        fontSize: 23,
-                        fontFamily: fonts.Roboto_700Bold,
-                        marginTop: 10,
-                        color: colors.secondary,
+                        flexDirection: "row",
+                        gap: 5,
                         alignSelf: "center",
+                        marginBottom: 10,
                       }}
                     >
-                      Items
-                    </Text>
-
-                    {order &&
-                      order?.foods.map((food, i) => (
-                        <Card key={i} food={food} />
-                      ))}
-
-                    {order?.status !== "delivered" && (
-                      <TouchableOpacity
+                      <Text
                         style={{
-                          backgroundColor: "red",
-                          height: 42,
-                          borderRadius: 12,
-                          justifyContent: "center",
-                          alignItems: "center",
-                          flexDirection: "row",
-                          gap: 10,
+                          paddingHorizontal: 9,
+                          paddingVertical: 3,
+                          borderWidth: 1,
                         }}
                       >
-                        <Text
-                          style={{
-                            color: "white",
-                            fontFamily: fonts.Roboto_700Bold,
-                            fontSize: 17,
-                          }}
-                        >
-                          Cancel order
-                        </Text>
-                        <MaterialCommunityIcons
-                          name="archive-cancel-outline"
-                          size={24}
-                          color="white"
-                        />
-                      </TouchableOpacity>
-                    )}
-                    {!israted && (
-                      <View
+                        {order?.otp?.toString()[0]}
+                      </Text>
+                      <Text
                         style={{
+                          paddingHorizontal: 9,
+                          paddingVertical: 3,
+                          borderWidth: 1,
+                        }}
+                      >
+                        {order?.otp?.toString()[1]}
+                      </Text>
+                      <Text
+                        style={{
+                          paddingHorizontal: 9,
+                          paddingVertical: 3,
+                          borderWidth: 1,
+                        }}
+                      >
+                        {order?.otp?.toString()[2]}
+                      </Text>
+                      <Text
+                        style={{
+                          paddingHorizontal: 9,
+                          paddingVertical: 3,
+                          borderWidth: 1,
+                        }}
+                      >
+                        {order?.otp?.toString()[3]}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 20,
+                        alignItems: "center",
+                        shadowColor: "blue",
+                        marginTop: order?.status == "delivered" ? 25 : 0,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_700Bold,
+                          fontSize: 17,
+                        }}
+                      >
+                        Total items :-
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_500Medium,
+                          fontSize: 15,
+                          color: "gray",
+                        }}
+                      >
+                        {order?.foods?.length}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 20,
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_700Bold,
+                          fontSize: 17,
+                        }}
+                      >
+                        Total price :-
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_500Medium,
+                          fontSize: 15,
+                          color: "gray",
+                        }}
+                      >
+                        ${order?.amount}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 2,
+                        alignItems: "center",
+                        marginTop: 3,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_700Bold,
+                          fontSize: 17,
+                        }}
+                      >
+                        Order Status :-{" "}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_700Bold,
+                          fontSize: 15,
+                          textDecorationLine: "underline",
+                        }}
+                      >
+                        {order?.status}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 2,
+                        alignItems: "center",
+                        marginTop: 3,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_700Bold,
+                          fontSize: 17,
+                        }}
+                      >
+                        seller :-{" "}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: fonts.Roboto_700Bold,
+                          fontSize: 15,
+                          textDecorationLine: "underline",
+                        }}
+                      >
+                        {order?.seller}
+                      </Text>
+                    </View>
+
+                    <View>
+                      <Text
+                        style={{
+                          fontSize: 23,
+                          fontFamily: fonts.Roboto_700Bold,
                           marginTop: 10,
-                          borderRadius: 10,
-                          backgroundColor: "white",
-                          elevation: 5,
-                          marginBottom: 20,
-                          width: "95%",
+                          color: colors.secondary,
                           alignSelf: "center",
-                          padding: 10,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontFamily: fonts.Roboto_700Bold,
-                            fontSize: 16,
-                          }}
-                        >
-                          Rating
-                        </Text>
-                        <View style={{ flexDirection: "row", gap: 5 }}>
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <TouchableOpacity
-                              key={i}
-                              onPress={() => setratings(i)}
-                              style={{
-                                borderRadius: 5,
-                                backgroundColor: "white",
-                                elevation: 5,
-                                marginBottom: 10,
-                                padding: 4,
-                                marginTop: 5,
-                              }}
-                            >
-                              {ratings >= i ? (
-                                <AntDesign name="star" size={20} color="gold" />
-                              ) : (
-                                <AntDesign
-                                  name="staro"
-                                  size={20}
-                                  color="black"
-                                />
-                              )}
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                        <TextInput
-                          style={{
-                            backgroundColor: "white",
-                            elevation: 5,
-                            borderRadius: 10,
-                            padding: 10,
-                          }}
-                          onChangeText={(t) => setreview(t)}
-                          multiline
-                          placeholder="Give your review to food (Optional)"
-                          numberOfLines={5}
-                          textAlignVertical="top"
-                        ></TextInput>
+                        Items
+                      </Text>
 
+                      {order &&
+                        order?.foods.map((food, i) => (
+                          <Card key={i} food={food} />
+                        ))}
+
+                      {order?.status !== "delivered" && (
                         <TouchableOpacity
                           style={{
-                            marginTop: 10,
+                            backgroundColor: "red",
+                            height: 42,
+                            borderRadius: 12,
                             justifyContent: "center",
                             alignItems: "center",
-                            backgroundColor: colors.secondary,
-                            height: 40,
-                            borderRadius: 8,
+                            flexDirection: "row",
+                            gap: 10,
                           }}
-                          onPress={() => submitReview()}
+                        >
+                          <Text
+                            style={{
+                              color: "white",
+                              fontFamily: fonts.Roboto_700Bold,
+                              fontSize: 17,
+                            }}
+                          >
+                            Cancel order
+                          </Text>
+                          <MaterialCommunityIcons
+                            name="archive-cancel-outline"
+                            size={24}
+                            color="white"
+                          />
+                        </TouchableOpacity>
+                      )}
+                      {!israted && order?.status == "delivered" && (
+                        <View
+                          style={{
+                            marginTop: 10,
+                            borderRadius: 10,
+                            backgroundColor: "white",
+                            elevation: 5,
+                            marginBottom: 20,
+                            width: "95%",
+                            alignSelf: "center",
+                            padding: 10,
+                          }}
                         >
                           <Text
                             style={{
                               fontFamily: fonts.Roboto_700Bold,
-                              color: "white",
-                              fontSize: 17,
+                              fontSize: 16,
                             }}
                           >
-                            {isreviwing ? <ActivityIndicator /> : "Submit"}
+                            Rating
                           </Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                  </View>
-                </ScrollView>
+                          <View style={{ flexDirection: "row", gap: 5 }}>
+                            {[1, 2, 3, 4, 5].map((i) => (
+                              <TouchableOpacity
+                                key={i}
+                                onPress={() => setratings(i)}
+                                style={{
+                                  borderRadius: 5,
+                                  backgroundColor: "white",
+                                  elevation: 5,
+                                  marginBottom: 10,
+                                  padding: 4,
+                                  marginTop: 5,
+                                }}
+                              >
+                                {ratings >= i ? (
+                                  <AntDesign
+                                    name="star"
+                                    size={20}
+                                    color="gold"
+                                  />
+                                ) : (
+                                  <AntDesign
+                                    name="staro"
+                                    size={20}
+                                    color="black"
+                                  />
+                                )}
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                          <TextInput
+                            style={{
+                              backgroundColor: "white",
+                              elevation: 5,
+                              borderRadius: 10,
+                              padding: 10,
+                            }}
+                            onChangeText={(t) => setreview(t)}
+                            multiline
+                            placeholder="Give your review to food (Optional)"
+                            numberOfLines={5}
+                            textAlignVertical="top"
+                          ></TextInput>
+
+                          <TouchableOpacity
+                            style={{
+                              marginTop: 10,
+                              justifyContent: "center",
+                              alignItems: "center",
+                              backgroundColor: colors.secondary,
+                              height: 40,
+                              borderRadius: 8,
+                            }}
+                            onPress={() => submitReview()}
+                          >
+                            <Text
+                              style={{
+                                fontFamily: fonts.Roboto_700Bold,
+                                color: "white",
+                                fontSize: 17,
+                              }}
+                            >
+                              {isreviwing ? <ActivityIndicator /> : "Submit"}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  </ScrollView>
+                </View>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      )}
-    </View>
+            </KeyboardAvoidingView>
+          </SafeAreaView>
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 

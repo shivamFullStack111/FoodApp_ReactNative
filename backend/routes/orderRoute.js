@@ -11,7 +11,7 @@ router.post("/create-order", isauthentication, async (req, res) => {
     if (!isUser)
       return res.send({ success: false, messsage: "user not found" });
 
-    const newOrder = new Orders(req.body);
+    const newOrder = new Orders({ ...req.body, otp: genOtp() });
 
     await newOrder.save();
 
@@ -128,14 +128,42 @@ router.get("/get-seller-orders", isauthentication, async (req, res) => {
 
 router.get("/get-partner-live-order", isauthentication, async (req, res) => {
   try {
+    // find order which status not equals to 'delivered'
     const order = await Orders.findOne({
       isorderacceptedbydelivery: true,
       "acceptedby.email": req.user?.email,
+      status: { $ne: "delivered" },
     });
 
     if (!order)
       return res.send({ success: false, message: "order not found " });
     else return res.send({ success: true, message: "order found ", order });
+  } catch (error) {
+    return res.send({ success: false, message: error.message });
+  }
+});
+
+router.post("/update-status-of-order", isauthentication, async (req, res) => {
+  try {
+    const { orderid, otp } = req.body;
+    const order = await Orders.findById({ _id: orderid });
+    if (!order) return res.send({ success: false, message: "order not found" });
+    if (order.otp != otp)
+      return res.send({ success: false, message: "invalid otp" });
+
+    if (order.status == "delivered")
+      return res.send({ success: false, message: "order already delivered" });
+    console.log(order?.acceptedby?.email);
+    if (order?.acceptedby?.email !== req?.user?.email)
+      return res.send({
+        success: false,
+        message: "you are not assigned to this order",
+      });
+
+    order.status = "delivered";
+
+    await order.save();
+    return res.send({ success: true, message: "order status updated" });
   } catch (error) {
     return res.send({ success: false, message: error.message });
   }
@@ -187,3 +215,11 @@ router.post("/update-order-status", isauthentication, async (req, res) => {
 });
 
 module.exports = router;
+
+const genOtp = () => {
+  let otp = "";
+  for (let i = 0; i <= 3; i++) {
+    otp += Math.floor(Math.random() * 10);
+  }
+  return otp;
+};

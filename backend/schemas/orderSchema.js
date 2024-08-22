@@ -25,6 +25,9 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "cash on delivery",
     },
+    otp: {
+      type: Number,
+    },
   },
   { timestamps: true }
 );
