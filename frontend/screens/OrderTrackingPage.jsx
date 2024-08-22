@@ -269,6 +269,7 @@ const OrderTrackingPage = ({ route }) => {
                       height: "60%",
                     }}
                   >
+                    {/* main map */}
                     <MapView
                       initialRegion={{
                         latitude: destination?.latitude,
